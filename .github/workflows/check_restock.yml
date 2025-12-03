@@ -1,0 +1,64 @@
+name: Check Sony Restock
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+
+permissions:
+  contents: read
+
+jobs:
+  check-restock:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        clean: false
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('uv.lock') }}-v3
+        restore-keys: |
+          ${{ runner.os }}-playwright-
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Install Playwright browsers (first time)
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      run: uv run playwright install --with-deps chromium
+
+    - name: Install Playwright browsers (from cache)
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: uv run playwright install chromium
+
+    - name: Run restock checker
+      env:
+        SLACK_WEBHOOK_URL_SUCCESS: ${{ secrets.SLACK_WEBHOOK_URL_SUCCESS }}
+        SLACK_WEBHOOK_URL_ALL: ${{ secrets.SLACK_WEBHOOK_URL_ALL }}
+      run: uv run src/main.py
+
+    - name: Upload debug screenshot
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-screenshot-${{ github.run_number }}
+        path: "*.png"
+        if-no-files-found: warn
+        retention-days: 30
