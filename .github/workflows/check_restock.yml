@@ -5,15 +5,19 @@ on:
   push:
     branches: [ "main" ]
   schedule:
-    - cron: '*/10 * * * *'  # Every 10 minutes
+    - cron: '*/1 * * * *'  # Every 1 minutes
 
 permissions:
   contents: read
 
+concurrency:
+  group: restock-checker
+  cancel-in-progress: true
+  
 jobs:
   check-restock:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
 
     steps:
     - name: Checkout repository
