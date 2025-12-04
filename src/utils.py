@@ -8,6 +8,7 @@ def create_success_payload(product_data):
     image_url = product_data["image_url"]
 
     payload = {
+        "text": f"📸 {product_name} 재입고 안내 - 드디어 재입고되었습니다! 가격: {price}",
         "attachments": [
             {
                 "color": "#36C5F0",
@@ -74,6 +75,7 @@ def create_failed_payload(product_data):
     product_url = product_data["product_url"]
 
     payload = {
+        "text": f"⚠️ {product_name} 아직 품절 상태입니다 - 계속 모니터링 중입니다.",
         "attachments": [
             {
                 "color": "#FFA500",  # 주의/품절 안내용 강조 색상
